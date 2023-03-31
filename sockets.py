@@ -102,7 +102,8 @@ def read_ws(ws,client):
             print("WS RECV: {}".format(msg)) 
             if (msg is not None):
                 packet = json.loads(msg)
-                send_all_json( packet )
+                for key in packet: 
+                    myWorld.set(key, packet[key])
             else:
                 break
     except:
@@ -116,6 +117,8 @@ def subscribe_socket(ws):
     client = Client()
     clients.append(client)
     g = gevent.spawn( read_ws, ws, client )    
+    
+    ws.send(json.dumps(myWorld.world()))
     try:
         while True:
             # block here
@@ -144,7 +147,9 @@ def flask_post_json():
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    myWorld.update(entity, flask_post_json())
+    data = flask_post_json()
+    for key in data: 
+        myWorld.update(entity, key, data[key])
     return json.dumps(myWorld.get(entity))
 
 @app.route("/world", methods=['POST','GET'])    
